@@ -16,8 +16,6 @@ function main()
     average_speed_total = 0;
     speed_total = 0;
 
-    initial_agent_coordinates = [];
-
 
 
 
@@ -29,16 +27,15 @@ function main()
     plotAx.NextPlot = 'add';
     plotAx.Position = [ax.Position(1)+ax.Position(3) 10 round(ax.Position(3)/3) round(ax.Position(3)/4)];
     plotAx.Box = 'on';
-    plotAx.Title.String = "Average speed";
+    plotAX.Title = "";
 
     plotAx2 = uiaxes(fig);
     plotAx2.NextPlot = 'add';
-    plotAx2.Position = [ax.Position(1)+ax.Position(3) plotAx.Position(2)+plotAx.Position(4)+40 round(ax.Position(3)/3) round(ax.Position(3)/4)];
+    plotAx2.Position = [ax.Position(1)+ax.Position(3) plotAx.Position(2)+plotAx.Position(4)+10 round(ax.Position(3)/3) round(ax.Position(3)/4)];
     plotAx2.Box = 'on';
-    plotAx2.Title.String = "Mean-displacement";
 
     [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents, generate_agents_in_random_places);
-    initial_agent_coordinates = OC;
+
     image(ax, uint8(field));
     axis(ax, 'off'); 
 
@@ -212,18 +209,16 @@ function main()
     function updateField(inp)
         try
             if (isTimerRunning && inp=="infinit") || (~isTimerRunning && inp=="once")
-                [average_displacement, initial_agent_coordinates, average_step, field, OC, reached_border, all_dead] = moveObjectsOnce(field, OC, initial_agent_coordinates, wall_type_for_setup, step_size_random_setup);
+                disp("Here1");
+                [average_step, field, OC, reached_border, all_dead] = moveObjectsOnce(field, OC, wall_type_for_setup, step_size_random_setup);
                 number_rounds = number_rounds + 1;
-                
-
+                disp("Here2" + num2str(size(OC,1)));
                 if ~all_dead
                     speed_total = (speed_total + average_step);
                     average_speed_total = speed_total / number_rounds;
 
                     plot(plotAx, new_x_for_plot, average_speed_total, 'o', 'MarkerFaceColor', 'g', 'MarkerSize', 4);
-                    plot(plotAx2, new_x_for_plot, average_displacement, 'o', 'MarkerFaceColor', 'r', 'MarkerSize', 4);
                     new_x_for_plot = new_x_for_plot + 1;
-
                 end
 
                    
@@ -267,8 +262,6 @@ function main()
         number_rounds = 0;
         number_rounds_to_border = 0;
         reached_border_first_time = false;
-        initial_agent_coordinates = OC;
-
 
         textarea.Value = "Field size: " + num2str(initial_size_of_field) + ", number of Agents: " + ...
             num2str(initial_number_of_agents) + ", wall-type: " + wall_type_for_setup + ...
@@ -276,10 +269,10 @@ function main()
         moveInfiniteButton.Text = 'Move Infinite';
         textarea2.Value = "Number of rounds: " + num2str(number_rounds);
         delete(plotAx.Children);
-        delete(plotAx2.Children);
         new_x_for_plot = 0;
         isTimerRunning = false;
         
+
     end
 
 

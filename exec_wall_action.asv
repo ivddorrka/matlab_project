@@ -71,4 +71,5 @@ function [absorbed_objects, newC, to_paint] = exec_wall_action(newC, wall_action
 
     end
 
+   
 end

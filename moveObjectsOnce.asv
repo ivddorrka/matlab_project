@@ -142,24 +142,19 @@ function [average_displacement, initial_agent_coordinates, average_step, updated
             % update TOTAL average displacement 
             average_displacement = average_displacement / numObjects;
 
-            % Kill objects who tried to walk over the wall if the wall-type
-            % is absorption
+            % Kill objects who tried to walk
             if strcmp(wall_action, "absorption")
                 objectCoordinates(absorbed_objects, :) = [];
                 initial_agent_coordinates(absorbed_objects, :) = [];
             end
             
-            % update field, coordinates and all_dead params
             updatedField = field;
             updatedObjectCoordinates = objectCoordinates;
             all_dead = false;
         end
-
-    % case there're no objects left to walk around
-    catch exception 
         
+    catch exception 
         disp(exception.message);
-        % basically averybody died
         updatedField = field;
         updatedObjectCoordinates = objectCoordinates;
         reached_border = true;
