@@ -10,15 +10,14 @@ function main()
     wall_type_for_setup = "simple";
     step_size_random_setup = false;
     step_size_random = false;
+    new_x_for_plot = 0;
+    generate_agents_in_random_places = false;
 
     average_speed_total = 0;
     speed_total = 0;
 
 
 
-
-
-%     fig = uifigure('Name', 'Random Walks', 'AutoResizeChildren', 'off', 'ResizeFcn', @(src, evt)resizing(src, evt));
 
     fig = uifigure('Name', 'Random Walks');
     ax = uiaxes(fig);
@@ -27,14 +26,9 @@ function main()
     plotAx = uiaxes(fig);
     plotAx.NextPlot = 'add';
     plotAx.Position = [ax.Position(1)+ax.Position(3) 115 round(ax.Position(3)/3) round(ax.Position(3)/3)];
-%     plotAx.XLim = [-100 100];
-%     plotAx.YLim = [-100 100];
-%     plotAx.XTick = -100:20:100;
-%     plotAx.YTick = -100:20:100;
     plotAx.Box = 'on';
-%     plotAx.GridAlpha = 0.4;
 
-    [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents);
+    [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents, generate_agents_in_random_places);
 
     image(ax, uint8(field));
     axis(ax, 'off'); 
@@ -133,6 +127,11 @@ function main()
     checkBoxstep.Text = 'Random-Step';
     checkBoxstep.Position = [buttonGroup.Position(1)+buttonGroup.Position(3)+10 buttonGroup.Position(2)+40 120 20];
     checkBoxstep.ValueChangedFcn = @(src, evt) changeCB_Value(checkBoxstep);
+
+    checkBoxRandomAgents = uicheckbox(fig);
+    checkBoxRandomAgents.Text = 'Random-Agents';
+    checkBoxRandomAgents.Position = [buttonGroup.Position(1)+buttonGroup.Position(3)+10 buttonGroup.Position(2)+20 120 20];
+    checkBoxRandomAgents.ValueChangedFcn = @(src, evt) randomAgentsGen(checkBoxRandomAgents);
     %%%%%%%%%% Random-step choice END %%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -143,25 +142,33 @@ function main()
     function changeCB_Value(checkBox)
         if checkBox.Value
             step_size_random = true;
-            step_size_random_setup = true;
+            
         else
             step_size_random = false;
-            step_size_random_setup = false;
+            
         end
     end
+
+    function randomAgentsGen(checkBox)
+        generate_agents_in_random_places = false;
+        if checkBox.Value
+            generate_agents_in_random_places = true;
+        end
+    end
+
 
     function handleSelectionChange(selection)
         if strcmp(selection, 'absorption')
             wall_type = 'absorption';
-            wall_type_for_setup = 'absorption';
+            
         end
         if strcmp(selection,'simple')
             wall_type = 'simple';
-            wall_type_for_setup = 'simple';
+            
         end
         if strcmp(selection, 'reflected')
             wall_type = 'reflected';
-            wall_type_for_setup = 'reflected';
+            
         end
 
         textarea.Value = "New wall type for the next setup is " + selection;
@@ -196,17 +203,16 @@ function main()
     function updateField(inp)
         try
             if (isTimerRunning && inp=="infinit") || (~isTimerRunning && inp=="once")
+                disp("Here1");
                 [average_step, field, OC, reached_border, all_dead] = moveObjectsOnce(field, OC, wall_type_for_setup, step_size_random_setup);
                 number_rounds = number_rounds + 1;
+                disp("Here2" + num2str(size(OC,1)));
                 if ~all_dead
                     speed_total = (speed_total + average_step);
                     average_speed_total = speed_total / number_rounds;
-%                     children = plotAx.Children; 
-%                     for i=1:numel(children)
-%                         children(i).XData = children(i).XData + 1;
-%                     end
-%                     plot(plotAx, -100, yCoord, 'o', 'MarkerFaceColor', 'g', 'MarkerSize', 7);
-                    plot(plotAx, -100, average_speed_total, 'o', 'MarkerFaceColor', 'g', 'MarkerSize', 7);
+
+                    plot(plotAx, new_x_for_plot, average_speed_total, 'o', 'MarkerFaceColor', 'g', 'MarkerSize', 4);
+                    new_x_for_plot = new_x_for_plot + 1;
                 end
 
                    
@@ -242,12 +248,17 @@ function main()
             stop(t); 
         end
 
-        [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents);
+        [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents, generate_agents_in_random_places);
         image(ax, uint8(field));
         wall_type_for_setup = wall_type;
         step_size_random_setup = step_size_random;
+        number_rounds = 0;
+        number_rounds_to_border = 0;
+
         textarea.Value = "Field size: " + num2str(initial_size_of_field) + ", number of Agents: " + ...
-            num2str(initial_number_of_agents) + ", wall-type: " + wall_type_for_setup;
+            num2str(initial_number_of_agents) + ", wall-type: " + wall_type_for_setup + ...
+            ", step size is random: " + num2str(step_size_random_setup);    
+        
 
     end
 

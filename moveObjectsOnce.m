@@ -1,11 +1,12 @@
 function [average_step, updatedField, updatedObjectCoordinates, reached_border, all_dead] = moveObjectsOnce(field, objectCoordinates, wall_action, step_size_random)
 
     numObjects = size(objectCoordinates, 1);
+    disp("NUM OBJECTS = " + num2str(numObjects));
     fieldSize = size(field, 1);
     reached_border = false;
 
     absorbed_objects = [];
-    step_size = randi([-1, 1]);
+    
     
     try
         average_step = 0;
@@ -14,6 +15,7 @@ function [average_step, updatedField, updatedObjectCoordinates, reached_border, 
         else
             for i = 1:numObjects
                 was_reflected = false;
+                step_size = randi([-1, 1]);
                 if step_size_random
                     step_size = randi([-10, 10]);
                 end
@@ -29,15 +31,15 @@ function [average_step, updatedField, updatedObjectCoordinates, reached_border, 
                 if modifyY
         
                     newY = currentY + step_size;
-        
                     if newY < 1 || newY > fieldSize
                         reached_border = true;
                         if strcmp(wall_action, "reflected")
                             was_reflected = true;
                         end
                         [absorbed_objects, newY, to_paint] = exec_wall_action(newY, wall_action, fieldSize, absorbed_objects, i);          
+                        
                     end
-        
+
                     if to_paint
                         
                         
@@ -49,13 +51,13 @@ function [average_step, updatedField, updatedObjectCoordinates, reached_border, 
                 else
         
                     newX = currentX + step_size;
-        
                     if newX < 1 || newX > fieldSize
                         if strcmp(wall_action, "reflected")
                             was_reflected = true;
                         end
                         reached_border = true;
                         [absorbed_objects, newX, to_paint] = exec_wall_action(newX, wall_action, fieldSize, absorbed_objects, i);
+                        
                     end
 
                     if to_paint
@@ -77,6 +79,7 @@ function [average_step, updatedField, updatedObjectCoordinates, reached_border, 
         end
         
     catch exception 
+        disp(exception.message);
         updatedField = field;
         updatedObjectCoordinates = objectCoordinates;
         reached_border = true;
