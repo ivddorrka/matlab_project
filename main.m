@@ -1,58 +1,81 @@
+%%%%
+% Function main - the main function of the program, shoud be started
+% withput any parameters
+% neother accepts nor returns anything
+%%%%
+
+
 function main()
     
-%   initial numbers 
+%%%% initial parameters %%%%
     initial_number_of_agents = 50;
     initial_size_of_field = 100;
+    % round means each objects has made its move
     number_rounds = 0;
+    % number of rounds to reach the border for the first time
     number_rounds_to_border = 0;
     reached_border_first_time = false;
+    % initially set wall-type to simple
     wall_type = "simple";
     wall_type_for_setup = "simple";
+
+    % initially set step-size to not-random  (aka step-size is either 0 or 1)
     step_size_random_setup = false;
     step_size_random = false;
+
+    % x-coordinate for both for data-plots
     new_x_for_plot = 0;
+    % initially each agent is generated in the middle of the field
     generate_agents_in_random_places = false;
 
+    % average total OVERALL speed 
     average_speed_total = 0;
     speed_total = 0;
 
+    %initial objects' (or agents' coordinates)
     initial_agent_coordinates = [];
 
-
-
-
+    % create figure for graphical depiction of the random-walk
     fig = uifigure('Name', 'Random Walks');
     ax = uiaxes(fig);
     ax.Position = [80 10 fig.Position(3)-10 fig.Position(4)-10];
   
+    % speed-plot
     plotAx = uiaxes(fig);
     plotAx.NextPlot = 'add';
     plotAx.Position = [ax.Position(1)+ax.Position(3) 10 round(ax.Position(3)/3) round(ax.Position(3)/4)];
     plotAx.Box = 'on';
     plotAx.Title.String = "Average speed";
 
+    % displacement-plot
     plotAx2 = uiaxes(fig);
     plotAx2.NextPlot = 'add';
     plotAx2.Position = [ax.Position(1)+ax.Position(3) plotAx.Position(2)+plotAx.Position(4)+40 round(ax.Position(3)/3) round(ax.Position(3)/4)];
     plotAx2.Box = 'on';
     plotAx2.Title.String = "Mean-displacement";
-
+    
+    % creating the initial field & objects on it
     [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents, generate_agents_in_random_places);
     initial_agent_coordinates = OC;
     image(ax, uint8(field));
     axis(ax, 'off'); 
 
+    % monitor with user-friendly helping messages
     textarea = uitextarea(fig);
     textarea.InnerPosition = [10 fig.Position(2)+round(fig.Position(2)/2) 70 40];    
     textarea.Value = 'Init message';
     textarea.Editable = false;
 
+    % monitor with number-of-rounds to reach the wall counter 
+    % as soon as the wall was reached for the first time - will never
+    % update it's value again
     textarea2 = uitextarea(fig);
     textarea2.InnerPosition = [10 textarea.Position(2)-50 70 40];   
     txt2val = "Number of rounds: " + num2str(number_rounds);
     textarea2.Value = txt2val;
     textarea2.Editable = false;
 
+    % setupButton in case user chose other conditions for the random-walk
     setupButton = uibutton(fig, 'Text', 'SETUP', 'Position', [10 textarea2.Position(2)-50 70 40]);    
     setupButton.ButtonPushedFcn = @(btn, event) updateSetup();
 
@@ -244,7 +267,7 @@ function main()
                 end
 
             else
-                error('MoveImpossibleException:ErrorID', 'Can not proceed with a single move!');
+                error('MoveImpossibleException:ErrorID', 'Can not proceed with a single move, while infinit moves are running, stop them first!');
             end
 
         catch exception 
@@ -268,17 +291,22 @@ function main()
         number_rounds_to_border = 0;
         reached_border_first_time = false;
         initial_agent_coordinates = OC;
+        new_x_for_plot = 0;
+        isTimerRunning = false;
+
+        average_speed_total = 0;
+        speed_total = 0;
 
 
         textarea.Value = "Field size: " + num2str(initial_size_of_field) + ", number of Agents: " + ...
             num2str(initial_number_of_agents) + ", wall-type: " + wall_type_for_setup + ...
             ", step size is random: " + num2str(step_size_random_setup);
-        moveInfiniteButton.Text = 'Move Infinite';
         textarea2.Value = "Number of rounds: " + num2str(number_rounds);
+        moveInfiniteButton.Text = 'Move Infinite';
+        % clear the plots
         delete(plotAx.Children);
         delete(plotAx2.Children);
-        new_x_for_plot = 0;
-        isTimerRunning = false;
+        
         
     end
 
