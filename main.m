@@ -6,29 +6,38 @@ function main()
     number_rounds = 0;
     number_rounds_to_border = 0;
     reached_border_first_time = false;
-    wall_type = "reflected";
-    wall_type_for_setup = "reflected";
+    wall_type = "simple";
+    wall_type_for_setup = "simple";
+    step_size_random_setup = false;
+    step_size_random = false;
+
+    average_speed_total = 0;
+    speed_total = 0;
 
 
 
 
 
 %     fig = uifigure('Name', 'Random Walks', 'AutoResizeChildren', 'off', 'ResizeFcn', @(src, evt)resizing(src, evt));
-%     figSize = fig.Position(3:4);
-%     textarea = uitextarea(fig);
-%     textarea.Position = [10 fig.Position(2) 150 50];    
-%     textarea.Value = 'Init message';
-%     textarea.Editable = false;
+
     fig = uifigure('Name', 'Random Walks');
     ax = uiaxes(fig);
-%     ax.Position = textarea.Position
     ax.Position = [80 10 fig.Position(3)-10 fig.Position(4)-10];
   
+    plotAx = uiaxes(fig);
+    plotAx.NextPlot = 'add';
+    plotAx.Position = [ax.Position(1)+ax.Position(3) 115 round(ax.Position(3)/3) round(ax.Position(3)/3)];
+%     plotAx.XLim = [-100 100];
+%     plotAx.YLim = [-100 100];
+%     plotAx.XTick = -100:20:100;
+%     plotAx.YTick = -100:20:100;
+    plotAx.Box = 'on';
+%     plotAx.GridAlpha = 0.4;
+
     [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents);
 
     image(ax, uint8(field));
     axis(ax, 'off'); 
-%     disp(fig.Position);
 
     textarea = uitextarea(fig);
     textarea.InnerPosition = [10 fig.Position(2)+round(fig.Position(2)/2) 70 40];    
@@ -43,19 +52,6 @@ function main()
 
     setupButton = uibutton(fig, 'Text', 'SETUP', 'Position', [10 textarea2.Position(2)-50 70 40]);    
     setupButton.ButtonPushedFcn = @(btn, event) updateSetup();
-
-
-
-    
-%     textarea = uitextarea(fig);
-%     textarea.Position = [figSize(1)-25 figSize(2)-10 10 20];    
-%     textarea.Value = 'Init message';
-%     textarea.Editable = false;
-
-
-%     setupButton = uibutton(fig, 'Text', 'SETUP', 'Position', [figSize(1)-60 figSize(2)-60 150 60]);    
-%     setupButton.ButtonPushedFcn = @(btn, event) updateSetup();
-
 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,7 +98,7 @@ function main()
     slider2 = uislider(fig);
     slider2.Position = [10 label.Position(2)-10 70 40]; % Position the slider below the textarea    
     
-    slider2.Limits = [50, 1000];  
+    slider2.Limits = [10, 1000];  
     slider2.Value = initial_size_of_field;  
     slider2.ValueChangedFcn = @(src, event) fieldSizeValueChanged(src);
 
@@ -115,53 +111,63 @@ function main()
     %%%%%% SLIDER FOR NUM AGENTS END %%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    dropdown = uidropdown(fig, 'Items', ["reflected", "simple", "absorption"]);
-    dropdown.Position = [label2.Position(1)+label2.Position(3)+20 10 100 50];
-    
-    
-    dropdown.Value = "reflected";
-    dropdown.Editable = 'on';
-    dropdown.ValueChangedFcn = @(source, event) dropdownCallback(source);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%% Wall choice type %%%%%%%%%%%%%%
 
+    buttonGroup = uibuttongroup(fig, 'Position', [label2.Position(1) + label2.Position(3) + 20 label2.Position(2)+15 220 60]);
 
+    radioButton1 = uiradiobutton(buttonGroup, 'Text', 'reflected', 'Position', [10 30 100 20]);
+    radioButton2 = uiradiobutton(buttonGroup, 'Text', 'simple', 'Position', [10 10 100 20]);
+    radioButton3 = uiradiobutton(buttonGroup, 'Text', 'absorption', 'Position', [110 30 100 20]);
 
-% 'Value', 'Apple',...
-% 'Editable', 'on',...
-% 'Position', [84 204 100 20],...
-% 'ValueChangedFcn', @(dd, event) fruitSelected(dd, label));
-%   
-% % function to call when option is selected (callback)
-% function fruitSelected(dd, label)
-%   
-% % read the value from the dropdown
-% val = dd.Value;
-%       
-% % set the text property of label
-% label.Text = val;
-% end
+    radioButton2.Value = true;
+
+    buttonGroup.SelectionChangedFcn = @(group, event) handleSelectionChange(group.SelectedObject.Text);
+
+    %%%%%%%%%% Wall choice type END %%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%% Random-step choice %%%%%%%%%%%%
+    checkBoxstep = uicheckbox(fig);
+    checkBoxstep.Text = 'Random-Step';
+    checkBoxstep.Position = [buttonGroup.Position(1)+buttonGroup.Position(3)+10 buttonGroup.Position(2)+40 120 20];
+    checkBoxstep.ValueChangedFcn = @(src, evt) changeCB_Value(checkBoxstep);
+    %%%%%%%%%% Random-step choice END %%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% CALLBACKS %%%%%%%%%%%%%%%%%%
 
-
-
-% % function to call when option is selected (callback)
-% function fruitSelected(dd, label)
-%   
-% % read the value from the dropdown
-% val = dd.Value;
-%       
-% % set the text property of label
-% label.Text = val;
-% end
-    function dropdownCallback(source)
-        
-        wall_type = source.Value;
-        textarea.Value = "Wall type for next setup is " + wall_type;
-        disp(['Selected Option: ' wall_type]);
-    
+    function changeCB_Value(checkBox)
+        if checkBox.Value
+            step_size_random = true;
+            step_size_random_setup = true;
+        else
+            step_size_random = false;
+            step_size_random_setup = false;
+        end
     end
 
+    function handleSelectionChange(selection)
+        if strcmp(selection, 'absorption')
+            wall_type = 'absorption';
+            wall_type_for_setup = 'absorption';
+        end
+        if strcmp(selection,'simple')
+            wall_type = 'simple';
+            wall_type_for_setup = 'simple';
+        end
+        if strcmp(selection, 'reflected')
+            wall_type = 'reflected';
+            wall_type_for_setup = 'reflected';
+        end
+
+        textarea.Value = "New wall type for the next setup is " + selection;
+    end
+
+    
     function sliderValueChanged(slider)
         initial_number_of_agents = round(slider.Value);  
         textarea.Value = "Number of agents for the next setup is " + num2str(initial_number_of_agents);
@@ -190,8 +196,20 @@ function main()
     function updateField(inp)
         try
             if (isTimerRunning && inp=="infinit") || (~isTimerRunning && inp=="once")
-                [field, OC, reached_border] = moveObjectsOnce(field, OC, wall_type_for_setup);
+                [average_step, field, OC, reached_border, all_dead] = moveObjectsOnce(field, OC, wall_type_for_setup, step_size_random_setup);
                 number_rounds = number_rounds + 1;
+                if ~all_dead
+                    speed_total = (speed_total + average_step);
+                    average_speed_total = speed_total / number_rounds;
+%                     children = plotAx.Children; 
+%                     for i=1:numel(children)
+%                         children(i).XData = children(i).XData + 1;
+%                     end
+%                     plot(plotAx, -100, yCoord, 'o', 'MarkerFaceColor', 'g', 'MarkerSize', 7);
+                    plot(plotAx, -100, average_speed_total, 'o', 'MarkerFaceColor', 'g', 'MarkerSize', 7);
+                end
+
+                   
                 if ~reached_border && ~reached_border_first_time
                     textarea2.Value = "Number of rounds: " + num2str(number_rounds);
                 else
@@ -202,8 +220,10 @@ function main()
                     textarea2.Value = "Number of rounds to reach the border: " + num2str(number_rounds_to_border);
                 end
                 image(ax, uint8(field));
-                if inp=="once"
+                if inp=="once" && ~all_dead
                     textarea.Value = "Moved once";
+                elseif all_dead
+                    textarea.Value = "All objects died, can not move anymore";
                 end
 
             else
@@ -225,18 +245,12 @@ function main()
         [field, OC] = generated_and_returned(initial_size_of_field, initial_number_of_agents);
         image(ax, uint8(field));
         wall_type_for_setup = wall_type;
-        textarea.Value = "Field size: " + num2str(initial_size_of_field) + ", number of Agents: " + num2str(initial_number_of_agents);
+        step_size_random_setup = step_size_random;
+        textarea.Value = "Field size: " + num2str(initial_size_of_field) + ", number of Agents: " + ...
+            num2str(initial_number_of_agents) + ", wall-type: " + wall_type_for_setup;
 
     end
 
-
-    
-    function resizing(src, evt)
-        figPosition = src.Position;
-        ax.Position = [10 10 figPosition(1) figPosition(2)]; 
-        textarea.Position = [figPosition(1)-25 figPosition(2)-10 50 10];
-       
-    end
 
     %%%%%%%%%%%%% CALLBACKS END %%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
